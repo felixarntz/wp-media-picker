@@ -48,66 +48,66 @@ The plugin supports numerous settings so that you can tweak how your fields work
 
 Here you find a list of all available settings:
 
-`store`
+`store`:
 * Determines how the attachment is stored in the input field
 * Accepts 'id' or 'url'
 * Default: 'url'
 
-`query`
+`query`:
 * Alters the attachments query in the media library (for example to only show images, use `{ post_mime_type: 'image' }`)
 * Default: empty object
 
-`filterable`
+`filterable`:
 * Whether the library is filterable, and if so what filters should be shown
 * Accepts 'all', 'uploaded' or 'unattached'
 * Default: 'all'
 
-`searchable`
+`searchable`:
 * Whether the library is searchable
 * Accepts a boolean
 * Default: true
 
-`editable`
+`editable`:
 * Whether the library content is editable
 * Accepts a boolean
 * Default: false
 
-`allowLocalEdits`
+`allowLocalEdits`:
 * Whether the library content can be edited locally (only used if `editable` is false)
 * Accepts a boolean
 * Default: false
 
-`displaySettings`
+`displaySettings`:
 * Whether to show the attachment display settings
 * Accepts a boolean
 * Default: false
 
-`displayUserSettings`
+`displayUserSettings`:
 * Whether to update the user settings when editing attachment display settings
 * Accepts a boolean
 * Default: false
 
-`label_add`
+`label_add`:
 * Sets the text for the add button on the field
 * Accepts a string
 * Default: 'Add Media'
 
-`label_replace`
+`label_replace`:
 * Sets the text for the replace button on the field
 * Accepts a string
 * Default: 'Replace'
 
-`label_remove`
+`label_remove`:
 * Sets the text for the remove button on the field
 * Accepts a string
 * Default: 'Remove'
 
-`label_modal`
+`label_modal`:
 * Sets the title text for the media modal
 * Accepts a string
 * Default: 'Add Media'
 
-`label_button`
+`label_button`:
 * Sets the button text for the media modal
 * Accepts a string
 * Default: 'Add Media'

@@ -17,6 +17,7 @@
 			return this;
 		};
 
+		console.error( 'WP Media not found' );
 		return;
 	}
 
