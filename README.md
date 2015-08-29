@@ -6,7 +6,7 @@ This jQuery plugin for WordPress can be used to transform an input field into a 
 
 ## Features
 
-* transforms a simple input field into a media picker with buttons to open the WordPress media modal
+* transforms a simple input field in the WordPress admin into a media picker with buttons to open the WordPress media modal
 * handles the custom media modal behavior as well as how the value is stored in the input field (you're free to choose between ID and URL)
 * renders a preview of the attachment if it is an image, video or audio file
 * uses WordPress Core technology wherever possible
