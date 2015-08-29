@@ -26,7 +26,6 @@ The preferred method to install this package is to use Bower.
 To include the script and stylesheet, enqueue the script and stylesheet like so:
 ```php
 <?php
-
 wp_enqueue_media();
 wp_enqueue_script( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.js', array( 'jQuery', 'media-editor' ), '0.1.0', true );
 wp_enqueue_style( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.css', array(), '0.1.0' );
@@ -49,21 +48,21 @@ The plugin supports numerous settings so that you can tweak how your fields work
 
 Here you find a list of all available settings:
 
-Setting                  | Description                                                                                                             | Default Value
------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------
-`store`                  | Determines how the attachment is stored in the input field. Accepts 'id' or 'url'                                       | 'url'
-`query`                  | Alters the attachments query in the media library (for example to only show images, use `{ post_mime_type: 'image' }`)  | empty object
-`filterable`             | Whether the library is filterable, and if so what filters should be shown. Accepts 'all', 'uploaded' or 'unattached'    | 'all'
-`searchable`             | Whether the library is searchable. Accepts a boolean                                                                    | true
-`editable`               | Whether the library content is editable. Accepts a boolean                                                              | false
-`allowLocalEdits`        | Whether the library content can be edited locally (only used if `editable` is false). Accepts a boolean                 | false
-`displaySettings`        | Whether to show the attachment display settings. Accepts a boolean                                                      | false
-`displayUserSettings`    | Whether to update the user settings when editing attachment display settings. Accepts a boolean                         | false
-`label_add`              | Sets the text for the add button on the field. Accepts a string                                                         | 'Add Media'
-`label_replace`          | Sets the text for the replace button on the field. Accepts a string                                                     | 'Replace'
-`label_remove`           | Sets the text for the remove button on the field. Accepts a string                                                      | 'Remove'
-`label_modal`            | Sets the title text for the media modal. Accepts a string                                                               | 'Add Media'
-`label_button`           | Sets the button text for the media modal. Accepts a string                                                              | 'Add Media'
+Setting | Description | Default Value
+------- | ----------- | -------------
+`store` | Determines how the attachment is stored in the input field. Accepts 'id' or 'url' | 'url'
+`query` | Alters the attachments query in the media library (for example to only show images, use `{ post_mime_type: 'image' }`) | empty object
+`filterable` | Whether the library is filterable, and if so what filters should be shown. Accepts 'all', 'uploaded' or 'unattached' | 'all'
+`searchable` | Whether the library is searchable. Accepts a boolean | true
+`editable` | Whether the library content is editable. Accepts a boolean | false
+`allowLocalEdits` | Whether the library content can be edited locally (only used if `editable` is false). Accepts a boolean | false
+`displaySettings` | Whether to show the attachment display settings. Accepts a boolean | false
+`displayUserSettings` | Whether to update the user settings when editing attachment display settings. Accepts a boolean | false
+`label_add` | Sets the text for the add button on the field. Accepts a string | 'Add Media'
+`label_replace` | Sets the text for the replace button on the field. Accepts a string | 'Replace'
+`label_remove` | Sets the text for the remove button on the field. Accepts a string | 'Remove'
+`label_modal` | Sets the title text for the media modal. Accepts a string | 'Add Media'
+`label_button` | Sets the button text for the media modal. Accepts a string | 'Add Media'
 
 ## Contribute
 
