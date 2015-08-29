@@ -19,7 +19,9 @@ This jQuery plugin for WordPress can be used to transform an input field into a 
 ### Install the plugin
 
 The preferred method to install this package is to use Bower.
-`bower install wp-media-picker`
+```
+bower install wp-media-picker
+```
 
 ### Enqueue script and stylesheet
 
