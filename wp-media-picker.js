@@ -1,5 +1,5 @@
 /*
- * WP Media Picker -  version 0.1.0
+ * WP Media Picker -  version 0.1.1
  *
  * Felix Arntz <felix-arntz@leaves-and-love.net>
  */
@@ -265,6 +265,10 @@
 		}, settings || {});
 
 		return this.each( function() {
+			if ( $( this ).next( '.wp-mediapicker-button' ).length > 0 ) {
+				return;
+			}
+
 			var $elem = $( this );
 			var elem_settings = $.extend({}, settings );
 			var data_settings = $elem.data( 'settings' );
