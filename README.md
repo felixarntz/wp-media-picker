@@ -29,8 +29,8 @@ To include the script and stylesheet, enqueue the script and stylesheet like so:
 ```php
 <?php
 wp_enqueue_media();
-wp_enqueue_script( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.js', array( 'jQuery', 'media-editor' ), '0.1.0', true );
-wp_enqueue_style( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.css', array(), '0.1.0' );
+wp_enqueue_script( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.js', array( 'jQuery', 'media-editor' ), '0.1.1', true );
+wp_enqueue_style( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.css', array(), '0.1.1' );
 
 ```
 
@@ -57,6 +57,7 @@ Here you find a list of all available settings:
 
 `query`:
 * Alters the attachments query in the media library (for example to only show images, use `{ post_mime_type: 'image' }`)
+* Accepts an object in JSON format
 * Default: empty object
 
 `filterable`:
