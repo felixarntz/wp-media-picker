@@ -29,8 +29,8 @@ To include the script and stylesheet, enqueue the script and stylesheet like so:
 ```php
 <?php
 wp_enqueue_media();
-wp_enqueue_script( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.js', array( 'jQuery', 'media-editor' ), '0.1.1', true );
-wp_enqueue_style( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.css', array(), '0.1.1' );
+wp_enqueue_script( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.js', array( 'jQuery', 'media-editor' ), '0.2.0', true );
+wp_enqueue_style( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.css', array(), '0.2.0' );
 
 ```
 
@@ -44,6 +44,30 @@ To turn your raw and boring input fields into really exciting media picker field
 jQuery( '.custom-media-field' ).wpMediaPicker();
 ```
 
+### Implement additional AJAX function
+
+If you want to store media URLs in the fields (by default the plugin stores media IDs), you need to implement an additional AJAX function somewhere in your code (for example in your theme's `functions.php`) for the plugin to work properly - don't worry, it's a pretty simple function. You could just copy the following code snippet:
+
+```php
+<?php
+function mytheme_ajax_get_attachment_by_url() {
+  if ( ! isset( $_REQUEST['url'] ) ) {
+    wp_send_json_error();
+  }
+
+  $id = attachment_url_to_postid( $_REQUEST['url'] );
+  if ( ! $id ) {
+    wp_send_json_error();
+  }
+
+  $_REQUEST['id'] = $id;
+
+  wp_ajax_get_attachment();
+  die();
+}
+add_action( 'wp_ajax_get-attachment-by-url', 'mytheme_ajax_get_attachment_by_url', 15 );
+```
+
 ## Plugin Settings
 
 The plugin supports numerous settings so that you can tweak how your fields work. There are two ways to apply settings to a field: Either specify the settings (as an object) when initializing the plugin in Javascript, or put the settings into a `data-settings` attribute on the field (in JSON format).
@@ -53,7 +77,7 @@ Here you find a list of all available settings:
 `store`:
 * Determines how the attachment is stored in the input field
 * Accepts 'id' or 'url'
-* Default: 'url'
+* Default: 'id'
 
 `query`:
 * Alters the attachments query in the media library (for example to only show images, use `{ post_mime_type: 'image' }`)

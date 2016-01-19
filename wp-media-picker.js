@@ -1,5 +1,5 @@
 /*
- * WP Media Picker -  version 0.1.1
+ * WP Media Picker -  version 0.2.0
  *
  * Felix Arntz <felix-arntz@leaves-and-love.net>
  */
@@ -110,12 +110,17 @@
 			media_content = '';
 		}
 
+		var content_class = 'wp-mediapicker-content';
+		if ( 0 === media_content.search( '<img' ) ) {
+			content_class += ' size-auto';
+		}
+
 		$elem
 			.hide()
 			.after(
 				'<a data-input-id="' + input_id + '" class="wp-mediapicker-button button" href="#">' + button_text + '</a>',
 				'<a data-input-id="' + input_id + '" class="wp-mediapicker-remove-button" href="#"' + ( media_content ? '' : ' style="display:none;"' ) + '>' + remove_button_text + '</a>',
-				'<div class="wp-mediapicker-content-wrap"><div id="wp-mediapicker-content-' + input_id + '" class="wp-mediapicker-content"' + ( media_content ? '' : ' style="display:none;"' ) + '>' + ( media_content ? media_content : '' ) + '</div></div>'
+				'<div class="wp-mediapicker-content-wrap"><div id="wp-mediapicker-content-' + input_id + '" class="' + content_class + '"' + ( media_content ? '' : ' style="display:none;"' ) + '>' + ( media_content ? media_content : '' ) + '</div></div>'
 			)
 			.next( '.wp-mediapicker-button' ).data( 'settings', settings );
 	};
@@ -147,19 +152,25 @@
 			var settings = workflow.options.mediapicker_settings || {};
 
 			switch ( settings.store ) {
+				case 'url':
+					$( '#' + input_id ).val( attachment.url );
+					break;
 				case 'ID':
 				case 'id':
 					$( '#' + input_id ).val( attachment.id );
 					break;
-				case 'url':
-					$( '#' + input_id ).val( attachment.url );
-					break;
 				default:
-					$( '#' + input_id ).val( attachment.url );
+					$( '#' + input_id ).val( attachment.id );
 			}
 
 			$( '.wp-mediapicker-button[data-input-id="' + input_id + '"]' ).text( settings.label_replace );
 			$( '.wp-mediapicker-remove-button[data-input-id="' + input_id + '"]' ).show();
+
+			if ( 'image' === attachment.type ) {
+				$( '#' + content_id ).addClass( 'size-auto' );
+			} else {
+				$( '#' + content_id ).removeClass( 'size-auto' );
+			}
 			$( '#' + content_id ).show();
 
 			window.send_to_editor = sendToEditor;
@@ -249,7 +260,7 @@
 	 */
 	$.fn.wpMediaPicker = function( settings ) {
 		settings = $.extend({
-			store: 'url',
+			store: 'id',
 			query: {},
 			filterable: 'all',
 			searchable: true,
@@ -286,24 +297,46 @@
 				}
 			}
 
-			var attachment_id = parseInt( $elem.val(), 10 );
+			var attachment = '';
+			if ( 'url' === elem_settings.store ) {
+				attachment = $elem.val();
+			} else {
+				attachment = parseInt( $elem.val(), 10 );
+			}
 
-			if ( attachment_id ) {
+			if ( attachment ) {
 				// if an attachment is set, make an AJAX call to get the attachment data and generate the preview output
-				wp.media.ajax({
-					type: 'POST',
-					data: {
-						action: 'get-attachment',
-						id: attachment_id
-					},
-					success: function( attachment ) {
-						generateMarkup( $elem, elem_settings, getMediaContent( attachment ) );
-					},
-					error: function() {
-						$elem.val( null );
-						generateMarkup( $elem, elem_settings );
-					}
-				});
+				if ( 'url' === elem_settings.store ) {
+					wp.media.ajax({
+						type: 'POST',
+						data: {
+							action: 'get-attachment-by-url',
+							url: attachment
+						},
+						success: function( attachment ) {
+							generateMarkup( $elem, elem_settings, getMediaContent( attachment ) );
+						},
+						error: function() {
+							$elem.val( null );
+							generateMarkup( $elem, elem_settings );
+						}
+					});
+				} else {
+					wp.media.ajax({
+						type: 'POST',
+						data: {
+							action: 'get-attachment',
+							id: attachment
+						},
+						success: function( attachment ) {
+							generateMarkup( $elem, elem_settings, getMediaContent( attachment ) );
+						},
+						error: function() {
+							$elem.val( null );
+							generateMarkup( $elem, elem_settings );
+						}
+					});
+				}
 			} else {
 				// otherwise just generate the markup
 				$elem.val( null );
