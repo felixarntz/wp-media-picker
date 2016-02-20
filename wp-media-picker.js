@@ -148,30 +148,13 @@
 			var content_id = wpActiveEditor;
 			var input_id = content_id.substring( 'wp-mediapicker-content-'.length );
 
-			var workflow = wp.media.editor.get( wpActiveEditor );
-			var settings = workflow.options.mediapicker_settings || {};
-
-			switch ( settings.store ) {
-				case 'url':
-					$( '#' + input_id ).val( attachment.url );
-					break;
-				case 'ID':
-				case 'id':
-					$( '#' + input_id ).val( attachment.id );
-					break;
-				default:
-					$( '#' + input_id ).val( attachment.id );
+			var controller = $( '#' + input_id ).data( 'wp-media-picker' );
+			if ( 'object' !== typeof controller ) {
+				console.error( 'Invalid input ID' );
+				return '';
 			}
 
-			$( '.wp-mediapicker-button[data-input-id="' + input_id + '"]' ).text( settings.label_replace );
-			$( '.wp-mediapicker-remove-button[data-input-id="' + input_id + '"]' ).show();
-
-			if ( 'image' === attachment.type ) {
-				$( '#' + content_id ).addClass( 'size-auto' );
-			} else {
-				$( '#' + content_id ).removeClass( 'size-auto' );
-			}
-			$( '#' + content_id ).show();
+			controller.send_attachment( attachment );
 
 			window.send_to_editor = sendToEditor;
 
@@ -181,71 +164,119 @@
 		}
 	};
 
-	/**
-	 * This anonymous function opens the media modal for a field (and creates it if it does not exist already).
-	 *
-	 * It is executed whenever the Add/Replace button is clicked.
-	 *
-	 * Since the usual WordPress media modal contains a lot of functionality that would be useless in case of WPMediaPicker,
-	 * a custom type of modal is being used.
-	 */
-	$( document ).on( 'click', '.wp-mediapicker-button', function( e ) {
-		var $this = $( this );
-		var content_id = 'wp-mediapicker-content-' + $this.data( 'input-id' );
-		var settings = $( this ).data( 'settings' );
-		var workflow = wp.media.editor.get( content_id );
+	function WPMediaPicker( $elem, settings ) {
+		this.$elem = $elem;
+		this.settings = settings;
+	}
 
-		e.preventDefault();
+	WPMediaPicker.prototype = {
+		init: function() {
+			var id = this.$elem.attr( 'id' );
+			var $button = this.$elem.next( '.wp-mediapicker-button' );
+			var $remove_button = $button.next( '.wp-mediapicker-remove-button' );
+			var $content = $remove_button.next().find( '.wp-mediapicker-content' );
 
-		if ( ! workflow ) {
-			workflow = wp.media.editor.add( content_id, {
+			this.workflow = wp.media.editor.add( id, {
 				frame: 'select',
 				state: 'insert',
 				states: [
 					new wp.media.controller.Library({
 						id:         'insert',
-						title:      settings.label_modal,
+						title:      this.settings.label_modal,
 						priority:   20,
 						toolbar:    'select',
-						filterable: settings.filterable,
-						library:    wp.media.query( settings.query ),
+						filterable: this.settings.filterable,
+						library:    wp.media.query( this.settings.query ),
 						multiple:   false,
-						editable:   settings.editable,
-						allowLocalEdits: settings.allowLocalEdits,
-						displaySettings: settings.displaySettings,
-						displayUserSettings: settings.displayUserSettings
+						editable:   this.settings.editable,
+						allowLocalEdits: this.settings.allowLocalEdits,
+						displaySettings: this.settings.displaySettings,
+						displayUserSettings: this.settings.displayUserSettings
 					})
 				],
 				button: {
 					event: 'insert',
-					text: settings.label_button
-				},
-				mediapicker_settings: settings
+					text: this.settings.label_button
+				}
 			});
+
+			var self = this;
+
+			$button.on( 'click', function( e ) {
+				e.preventDefault();
+
+				wp.media.editor.open( id );
+			});
+
+			$remove_button.on( 'click', function( e ) {
+				e.preventDefault();
+
+				self.$elem.val( null );
+
+				if ( 'function' === typeof this.settings.clear ) {
+					this.settings.clear.call( this );
+				}
+
+				$button.text( self.settings.label_add );
+				$content.hide().empty();
+
+				$remove_button.hide();
+			});
+		},
+
+		send_attachment: function( attachment ) {
+			var $button = this.$elem.next( '.wp-mediapicker-button' );
+			var $remove_button = $button.next( '.wp-mediapicker-remove-button' );
+			var $content = $remove_button.next().find( '.wp-mediapicker-content' );
+
+			switch ( this.settings.store ) {
+				case 'url':
+					this.value( attachment.url );
+					break;
+				case 'ID':
+				case 'id':
+					this.value( attachment.id );
+					break;
+				default:
+					this.value( attachment.id );
+			}
+
+			if ( 'function' === typeof this.settings.change ) {
+				this.settings.change.call( this );
+			}
+
+			$button.text( this.settings.label_replace );
+			$remove_button.show();
+
+			if ( 'image' === attachment.type ) {
+				$content.addClass( 'size-auto' );
+			} else {
+				$content.removeClass( 'size-auto' );
+			}
+			$content.show();
+		},
+
+		value: function( value ) {
+			if ( 'undefined' === value ) {
+				return this.$elem.val();
+			}
+
+			this.$elem.val( value );
+		},
+
+		setting: function( key, value ) {
+			if ( 'object' === key ) {
+				$.extend( this.settings, key );
+				return;
+			}
+
+			if ( 'undefined' === value ) {
+				return this.settings[ key ];
+			}
+
+			this.settings[ key ] = value;
 		}
-
-		wp.media.editor.open( content_id );
-	});
-
-	/**
-	 * This anonymous function removes the attachment for a field.
-	 *
-	 * It is executed whenever the Remove button is clicked.
-	 */
-	$( document ).on( 'click', '.wp-mediapicker-remove-button', function( e ) {
-		var $this = $( this );
-		var input_id = $this.data( 'input-id' );
-		var settings = $( '.wp-mediapicker-button[data-input-id="' + input_id + '"]' ).data( 'settings' );
-
-		e.preventDefault();
-
-		$( '#' + input_id ).val( null );
-
-		$( '.wp-mediapicker-button[data-input-id="' + input_id + '"]' ).text( settings.label_add );
-		$( '#wp-mediapicker-content-' + input_id ).hide().empty();
-
-		$this.hide();
-	});
+	};
 
 	/**
 	 * Initializes the plugin on one or more fields.
@@ -259,6 +290,23 @@
 	 * @return jQuery
 	 */
 	$.fn.wpMediaPicker = function( settings ) {
+		if ( $( this ).data( 'wp-media-picker' ) ) {
+			var controller = $( this ).data( 'wp-media-picker' );
+			var arg;
+
+			if ( 'value' === settings ) {
+				arg = Array.prototype.slice.call( arguments, 1 );
+				return controller.value( arg );
+			} else if ( 'object' === typeof settings ) {
+				return controller.setting( settings );
+			} else if ( 'string' === typeof settings ) {
+				arg = Array.prototype.slice.call( arguments, 1 );
+				return controller.setting( settings, arg );
+			}
+
+			return;
+		}
+
 		settings = $.extend({
 			store: 'id',
 			query: {},
@@ -268,6 +316,8 @@
 			allowLocalEdits: false,
 			displaySettings: false,
 			displayUserSettings: false,
+			change: false,
+			clear: false,
 			label_add: wp.media.view.l10n.addMedia,
 			label_replace: wp.media.view.l10n.replace,
 			label_remove: wp.media.view.l10n.remove,
@@ -276,12 +326,8 @@
 		}, settings || {});
 
 		return this.each( function() {
-			if ( $( this ).next( '.wp-mediapicker-button' ).length > 0 ) {
-				return;
-			}
-
 			var $elem = $( this );
-			var elem_settings = $.extend({}, settings );
+			var elem_settings = $.extend({}, _settings );
 			var data_settings = $elem.data( 'settings' );
 
 			if ( data_settings ) {
@@ -315,10 +361,20 @@
 						},
 						success: function( attachment ) {
 							generateMarkup( $elem, elem_settings, getMediaContent( attachment ) );
+
+							var elem_controller = new WPMediaPicker( $elem, elem_settings );
+							elem_controller.init();
+
+							$elem.data( 'wp-media-picker', elem_controller );
 						},
 						error: function() {
 							$elem.val( null );
 							generateMarkup( $elem, elem_settings );
+
+							var elem_controller = new WPMediaPicker( $elem, elem_settings );
+							elem_controller.init();
+
+							$elem.data( 'wp-media-picker', elem_controller );
 						}
 					});
 				} else {
@@ -330,10 +386,20 @@
 						},
 						success: function( attachment ) {
 							generateMarkup( $elem, elem_settings, getMediaContent( attachment ) );
+
+							var elem_controller = new WPMediaPicker( $elem, elem_settings );
+							elem_controller.init();
+
+							$elem.data( 'wp-media-picker', elem_controller );
 						},
 						error: function() {
 							$elem.val( null );
 							generateMarkup( $elem, elem_settings );
+
+							var elem_controller = new WPMediaPicker( $elem, elem_settings );
+							elem_controller.init();
+
+							$elem.data( 'wp-media-picker', elem_controller );
 						}
 					});
 				}
@@ -341,6 +407,11 @@
 				// otherwise just generate the markup
 				$elem.val( null );
 				generateMarkup( $elem, elem_settings );
+
+				var elem_controller = new WPMediaPicker( $elem, elem_settings );
+				elem_controller.init();
+
+				$elem.data( 'wp-media-picker', elem_controller );
 			}
 		});
 	};
