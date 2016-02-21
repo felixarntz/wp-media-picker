@@ -6,11 +6,6 @@
 
 ( function( $, wp ) {
 
-	if ( typeof $.fn.wpMediaPicker !== 'undefined' ) {
-		// if the jQuery plugin is already defined, abort
-		return;
-	}
-
 	if ( typeof wp === 'undefined' || typeof wp.media === 'undefined' ) {
 		// if wp.media is not loaded, scaffold the jQuery plugin function and abort
 		$.fn.wpMediaPicker = function() {
@@ -52,80 +47,6 @@
 	};
 
 	/**
-	 * Returns the preview HTML output for an attachment.
-	 *
-	 * @param object attachment the attachment object to generate output for
-	 * @return string HTML output to send to the preview div
-	 */
-	var getMediaContent = function( attachment ) {
-		var output = '';
-
-		if ( 'image' === attachment.type ) {
-			// for image attachments, show the image
-			var src = attachment.url;
-			if ( attachment.sizes && attachment.sizes.large ) {
-				src = attachment.sizes.large.url;
-			} else if ( attachment.sizes && attachment.sizes.full ) {
-				src = attachment.sizes.full.url;
-			}
-			output += '<img src="' + src + '" alt="' + attachment.alt + '" />';
-		} else if ( 'video' === attachment.type ) {
-			// for video attachments, show the video player, optionally with the poster
-			var poster = '';
-			if ( attachment.image && attachment.image.src !== attachment.icon ) {
-				poster = attachment.image.src;
-			}
-			output += '<video class="wp-video-shortcode" preload="metadata"' + ( poster ? ' poster="' + poster + '"' : '' ) + ' controls><source type="' + attachment.mime + '" src="' + attachment.url + '" /></video>';
-		} else if ( 'audio' === attachment.type ) {
-			// for audio attachments, show the audio player, with either the cover or the mime type icon
-			if ( attachment.image && attachment.image.src && attachment.image.src !== attachment.icon ) {
-				output += '<img class="wp-audio-cover" src="' + attachment.image.src + '" alt="' + attachment.filename + '" />';
-			} else {
-				output += '<div class="mime-type-icon"><img src="' + attachment.icon + '" /><span>' + attachment.filename + '</span></div>';
-			}
-			output += '<audio class="wp-audio-shortcode" width="100%" preload="none" controls><source type="' + attachment.mime + '" src="' + attachment.url + '" /></audio>';
-		} else {
-			// if neither of the above formats, just show a mime type icon with the filename
-			output += '<div class="mime-type-icon"><img src="' + attachment.icon + '" /><span>' + attachment.filename + '</span></div>';
-		}
-
-		return output;
-	};
-
-	/**
-	 * Generates the basic plugin markup.
-	 *
-	 * This function is called when initializing the plugin on an element.
-	 *
-	 * @param jQuery $elem the input field to generate the markup for
-	 * @param object settings the settings for the input field
-	 * @param string media_content the preview HTML output for the field's attachment (optional)
-	 */
-	var generateMarkup = function( $elem, settings, media_content ) {
-		var input_id = $elem.attr( 'id' );
-		var button_text = media_content ? settings.label_replace : settings.label_add;
-		var remove_button_text = settings.label_remove;
-
-		if ( ! media_content ) {
-			media_content = '';
-		}
-
-		var content_class = 'wp-mediapicker-content';
-		if ( 0 === media_content.search( '<img' ) ) {
-			content_class += ' size-auto';
-		}
-
-		$elem
-			.hide()
-			.after(
-				'<a data-input-id="' + input_id + '" class="wp-mediapicker-button button" href="#">' + button_text + '</a>',
-				'<a data-input-id="' + input_id + '" class="wp-mediapicker-remove-button" href="#"' + ( media_content ? '' : ' style="display:none;"' ) + '>' + remove_button_text + '</a>',
-				'<div class="wp-mediapicker-content-wrap"><div id="wp-mediapicker-content-' + input_id + '" class="' + content_class + '"' + ( media_content ? '' : ' style="display:none;"' ) + '>' + ( media_content ? media_content : '' ) + '</div></div>'
-			)
-			.next( '.wp-mediapicker-button' ).data( 'settings', settings );
-	};
-
-	/**
 	 * Overrides the WordPress Core function to send an attachment from the media modal to the input field.
 	 *
 	 * This function assigns the attachment ID or URL respectively to the input field.
@@ -145,169 +66,24 @@
 			wpActiveEditor = window.wpActiveEditor || '';
 		}
 		if ( 0 === wpActiveEditor.search( 'wp-mediapicker-content-' ) ) {
-			var content_id = wpActiveEditor;
-			var input_id = content_id.substring( 'wp-mediapicker-content-'.length );
-
-			var controller = $( '#' + input_id ).data( 'wp-media-picker' );
-			if ( 'object' !== typeof controller ) {
-				console.error( 'Invalid input ID' );
-				return '';
-			}
-
-			controller.send_attachment( attachment );
+			var input_id = wpActiveEditor.substring( 'wp-mediapicker-content-'.length );
 
 			window.send_to_editor = sendToEditor;
 
-			return getMediaContent( attachment );
+			return $( '#' + input_id ).wpMediaPicker( 'sendAttachment', attachment );
 		} else {
 			return _orig_send_attachment.apply( this, [ props, attachment ] );
 		}
 	};
 
-	function WPMediaPicker( $elem, settings ) {
-		this.$elem = $elem;
-		this.settings = settings;
-	}
+	var _wrap = '<div class="wp-mediapicker-container" />';
+	var _open_button = '<a class="wp-mediapicker-open-button button" />';
+	var _remove_button = '<a class="wp-mediapicker-remove-button" />';
+	var _content_wrap = '<div class="wp-mediapicker-content-wrap" />';
+	var _content = '<div class="wp-mediapicker-content" />';
 
-	WPMediaPicker.prototype = {
-		init: function() {
-			var id = this.$elem.attr( 'id' );
-			var $button = this.$elem.next( '.wp-mediapicker-button' );
-			var $remove_button = $button.next( '.wp-mediapicker-remove-button' );
-			var $content = $remove_button.next().find( '.wp-mediapicker-content' );
-
-			this.workflow = wp.media.editor.add( id, {
-				frame: 'select',
-				state: 'insert',
-				states: [
-					new wp.media.controller.Library({
-						id:         'insert',
-						title:      this.settings.label_modal,
-						priority:   20,
-						toolbar:    'select',
-						filterable: this.settings.filterable,
-						library:    wp.media.query( this.settings.query ),
-						multiple:   false,
-						editable:   this.settings.editable,
-						allowLocalEdits: this.settings.allowLocalEdits,
-						displaySettings: this.settings.displaySettings,
-						displayUserSettings: this.settings.displayUserSettings
-					})
-				],
-				button: {
-					event: 'insert',
-					text: this.settings.label_button
-				}
-			});
-
-			var self = this;
-
-			$button.on( 'click', function( e ) {
-				e.preventDefault();
-
-				wp.media.editor.open( id );
-			});
-
-			$remove_button.on( 'click', function( e ) {
-				e.preventDefault();
-
-				self.$elem.val( null );
-
-				if ( 'function' === typeof this.settings.clear ) {
-					this.settings.clear.call( this );
-				}
-
-				$button.text( self.settings.label_add );
-				$content.hide().empty();
-
-				$remove_button.hide();
-			});
-		},
-
-		send_attachment: function( attachment ) {
-			var $button = this.$elem.next( '.wp-mediapicker-button' );
-			var $remove_button = $button.next( '.wp-mediapicker-remove-button' );
-			var $content = $remove_button.next().find( '.wp-mediapicker-content' );
-
-			switch ( this.settings.store ) {
-				case 'url':
-					this.value( attachment.url );
-					break;
-				case 'ID':
-				case 'id':
-					this.value( attachment.id );
-					break;
-				default:
-					this.value( attachment.id );
-			}
-
-			if ( 'function' === typeof this.settings.change ) {
-				this.settings.change.call( this );
-			}
-
-			$button.text( this.settings.label_replace );
-			$remove_button.show();
-
-			if ( 'image' === attachment.type ) {
-				$content.addClass( 'size-auto' );
-			} else {
-				$content.removeClass( 'size-auto' );
-			}
-			$content.show();
-		},
-
-		value: function( value ) {
-			if ( 'undefined' === value ) {
-				return this.$elem.val();
-			}
-
-			this.$elem.val( value );
-		},
-
-		setting: function( key, value ) {
-			if ( 'object' === key ) {
-				$.extend( this.settings, key );
-				return;
-			}
-
-			if ( 'undefined' === value ) {
-				return this.settings[ key ];
-			}
-
-			this.settings[ key ] = value;
-		}
-	};
-
-	/**
-	 * Initializes the plugin on one or more fields.
-	 *
-	 * This is the actual jQuery plugin function.
-	 *
-	 * In addition to providing settings in the function call, it is also possible to store field-related settings in a field directly.
-	 * It has to be valid JSON and it must be stored in a 'data-settings' attribute.
-	 *
-	 * @param object settings custom settings for the field (all optional)
-	 * @return jQuery
-	 */
-	$.fn.wpMediaPicker = function( settings ) {
-		if ( $( this ).data( 'wp-media-picker' ) ) {
-			var controller = $( this ).data( 'wp-media-picker' );
-			var arg;
-
-			if ( 'value' === settings ) {
-				arg = Array.prototype.slice.call( arguments, 1 );
-				return controller.value( arg );
-			} else if ( 'object' === typeof settings ) {
-				return controller.setting( settings );
-			} else if ( 'string' === typeof settings ) {
-				arg = Array.prototype.slice.call( arguments, 1 );
-				return controller.setting( settings, arg );
-			}
-
-			return;
-		}
-
-		settings = $.extend({
+	var MediaPicker = {
+		options: {
 			store: 'id',
 			query: {},
 			filterable: 'all',
@@ -323,58 +99,155 @@
 			label_remove: wp.media.view.l10n.remove,
 			label_modal: wp.media.view.l10n.addMedia,
 			label_button: wp.media.view.l10n.addMedia
-		}, settings || {});
+		},
 
-		return this.each( function() {
-			var $elem = $( this );
-			var elem_settings = $.extend({}, _settings );
-			var data_settings = $elem.data( 'settings' );
+		_create: function() {
+			var self = this;
 
-			if ( data_settings ) {
-				if ( typeof data_settings === 'string' ) {
-					try {
-						data_settings = JSON.parse( data_settings );
-					} catch ( err ) {
-						console.error( err.message );
-					}
+			$.extend( self.options, self.element.data() );
+
+			self.content_id = 'wp-mediapicker-content-' + self.element.attr( 'id' );
+
+			self.element.hide().wrap( _wrap );
+			self.wrap = self.element.parent();
+			self.open_button = $( _open_button ).insertAfter( self.element );
+			self.remove_button = $( _remove_button ).insertAfter( self.open_button ).text( self.options.label_remove );
+			self.content_wrap = $( _content_wrap ).insertAfter( self.remove_button );
+			self.content = $( _content ).appendTo( self.content_wrap ).attr( 'id', self.content_id );
+
+			self.workflow = wp.media.editor.add( self.content_id, {
+				frame: 'select',
+				state: 'insert',
+				states: [
+					new wp.media.controller.Library({
+						id:         'insert',
+						title:      self.options.label_modal,
+						priority:   20,
+						toolbar:    'select',
+						filterable: self.options.filterable,
+						library:    wp.media.query( self.options.query ),
+						multiple:   false,
+						editable:   self.options.editable,
+						allowLocalEdits: self.options.allowLocalEdits,
+						displaySettings: self.options.displaySettings,
+						displayUserSettings: self.options.displayUserSettings
+					})
+				],
+				button: {
+					event: 'insert',
+					text: self.options.label_button
 				}
-				if ( typeof data_settings === 'object' ) {
-					elem_settings = $.extend( elem_settings, data_settings );
-				}
-			}
+			});
 
-			var attachment = '';
-			if ( 'url' === elem_settings.store ) {
-				attachment = $elem.val();
+			self._updateContent();
+
+			self._addListeners();
+		},
+
+		_addListeners: function() {
+			var self = this;
+
+			self.open_button.on( 'click', function( e ) {
+				e.preventDefault();
+
+				self.open();
+			});
+
+			self.remove_button.on( 'click', function( e ) {
+				e.preventDefault();
+
+				self.element.val( null );
+
+				self._resetContent();
+
+				if ( 'function' === typeof self.options.clear ) {
+					self.options.clear.call( self );
+				}
+			});
+		},
+
+		_createContent: function( attachment, return_content ) {
+			var self = this;
+
+			self.attachment = attachment;
+
+			self.open_button.text( self.options.label_replace );
+			self.remove_button.show();
+
+			var preview_content = '';
+			if ( 'image' === attachment.type ) {
+				// for image attachments, show the image
+				var src = attachment.url;
+				if ( attachment.sizes && attachment.sizes.large ) {
+					src = attachment.sizes.large.url;
+				} else if ( attachment.sizes && attachment.sizes.full ) {
+					src = attachment.sizes.full.url;
+				}
+				preview_content += '<img src="' + src + '" alt="' + attachment.alt + '" />';
+			} else if ( 'video' === attachment.type ) {
+				// for video attachments, show the video player, optionally with the poster
+				var poster = '';
+				if ( attachment.image && attachment.image.src !== attachment.icon ) {
+					poster = attachment.image.src;
+				}
+				preview_content += '<video class="wp-video-shortcode" preload="metadata"' + ( poster ? ' poster="' + poster + '"' : '' ) + ' controls><source type="' + attachment.mime + '" src="' + attachment.url + '" /></video>';
+			} else if ( 'audio' === attachment.type ) {
+				// for audio attachments, show the audio player, with either the cover or the mime type icon
+				if ( attachment.image && attachment.image.src && attachment.image.src !== attachment.icon ) {
+					preview_content += '<img class="wp-audio-cover" src="' + attachment.image.src + '" alt="' + attachment.filename + '" />';
+				} else {
+					preview_content += '<div class="mime-type-icon"><img src="' + attachment.icon + '" /><span>' + attachment.filename + '</span></div>';
+				}
+				preview_content += '<audio class="wp-audio-shortcode" width="100%" preload="none" controls><source type="' + attachment.mime + '" src="' + attachment.url + '" /></audio>';
 			} else {
-				attachment = parseInt( $elem.val(), 10 );
+				// if neither of the above formats, just show a mime type icon with the filename
+				preview_content += '<div class="mime-type-icon"><img src="' + attachment.icon + '" /><span>' + attachment.filename + '</span></div>';
 			}
 
-			if ( attachment ) {
+			if ( 0 <= preview_content.search( '<img ' ) ) {
+				self.content.addClass( 'size-auto' );
+			} else {
+				self.content.removeClass( 'size-auto' );
+			}
+
+			self.content.show();
+
+			if ( return_content ) {
+				return preview_content;
+			}
+
+			self.content.html( preview_content );
+		},
+
+		_resetContent: function() {
+			var self = this;
+
+			self.attachment = null;
+
+			self.open_button.text( self.options.label_add );
+			self.remove_button.hide();
+			self.content.hide().empty().removeClass( 'size-auto' );
+		},
+
+		_updateContent: function() {
+			var self = this;
+			var val = self.element.val();
+
+			if ( val ) {
 				// if an attachment is set, make an AJAX call to get the attachment data and generate the preview output
-				if ( 'url' === elem_settings.store ) {
+				if ( 'url' === self.options.store ) {
 					wp.media.ajax({
 						type: 'POST',
 						data: {
 							action: 'get-attachment-by-url',
-							url: attachment
+							url: val
 						},
 						success: function( attachment ) {
-							generateMarkup( $elem, elem_settings, getMediaContent( attachment ) );
-
-							var elem_controller = new WPMediaPicker( $elem, elem_settings );
-							elem_controller.init();
-
-							$elem.data( 'wp-media-picker', elem_controller );
+							self._createContent( attachment );
 						},
 						error: function() {
-							$elem.val( null );
-							generateMarkup( $elem, elem_settings );
-
-							var elem_controller = new WPMediaPicker( $elem, elem_settings );
-							elem_controller.init();
-
-							$elem.data( 'wp-media-picker', elem_controller );
+							self.element.val( null );
+							self._resetContent();
 						}
 					});
 				} else {
@@ -382,37 +255,84 @@
 						type: 'POST',
 						data: {
 							action: 'get-attachment',
-							id: attachment
+							id: parseInt( val, 10 )
 						},
 						success: function( attachment ) {
-							generateMarkup( $elem, elem_settings, getMediaContent( attachment ) );
-
-							var elem_controller = new WPMediaPicker( $elem, elem_settings );
-							elem_controller.init();
-
-							$elem.data( 'wp-media-picker', elem_controller );
+							self._createContent( attachment );
 						},
 						error: function() {
-							$elem.val( null );
-							generateMarkup( $elem, elem_settings );
-
-							var elem_controller = new WPMediaPicker( $elem, elem_settings );
-							elem_controller.init();
-
-							$elem.data( 'wp-media-picker', elem_controller );
+							self.element.val( null );
+							self._resetContent();
 						}
 					});
 				}
 			} else {
 				// otherwise just generate the markup
-				$elem.val( null );
-				generateMarkup( $elem, elem_settings );
-
-				var elem_controller = new WPMediaPicker( $elem, elem_settings );
-				elem_controller.init();
-
-				$elem.data( 'wp-media-picker', elem_controller );
+				self.element.val( null );
+				self._resetContent();
 			}
-		});
+		},
+
+		sendAttachment: function( attachment ) {
+			var self = this;
+
+			if ( 'url' === self.options.store ) {
+				self.element.val( attachment.url );
+			} else {
+				self.element.val( attachment.id );
+			}
+
+			var content = self._createContent( attachment, true );
+
+			if ( 'function' === typeof self.options.change ) {
+				self.options.change.call( self );
+			}
+
+			return content;
+		},
+
+		open: function() {
+			wp.media.editor.open( this.content_id );
+		},
+
+		close: function() {
+			this.workflow.close();
+		},
+
+		attachment: function( attachment ) {
+			if ( 'undefined' === typeof attachment ) {
+				return this.attachment;
+			}
+
+			if ( ! attachment ) {
+				this.element.val( null );
+				this._resetContent();
+			} else {
+				if ( 'url' === this.options.store ) {
+					this.element.val( attachment.url );
+				} else {
+					this.element.val( attachment.id );
+				}
+				this._createContent( attachment );
+			}
+		},
+
+		value: function( val ) {
+			if ( 'undefined' === typeof val ) {
+				if ( ! this.attachment ) {
+					return '';
+				}
+				if ( 'url' === this.options.store ) {
+					return this.attachment.url;
+				} else {
+					return this.attachment.id;
+				}
+			}
+
+			this.element.val( val );
+			this._updateContent();
+		}
 	};
+
+	$.widget( 'wp.wpMediaPicker', MediaPicker );
 }( jQuery, wp ) );

@@ -5,6 +5,7 @@
  */
 
 .wp-mediapicker-remove-button {
+	display: none;
 	margin-left: 10px;
 	line-height: 28px;
 }
