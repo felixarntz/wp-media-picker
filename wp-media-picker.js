@@ -120,14 +120,15 @@
 				state: 'insert',
 				states: [
 					new wp.media.controller.Library({
-						id:         'insert',
-						title:      self.options.label_modal,
-						priority:   20,
-						toolbar:    'select',
+						id: 'insert',
+						title: self.options.label_modal,
+						priority: 20,
+						toolbar: 'select',
 						filterable: self.options.filterable,
-						library:    wp.media.query( self.options.query ),
-						multiple:   false,
-						editable:   self.options.editable,
+						library: wp.media.query( self.options.query ),
+						multiple: false,
+						syncSelection: true,
+						editable: self.options.editable,
 						allowLocalEdits: self.options.allowLocalEdits,
 						displaySettings: self.options.displaySettings,
 						displayUserSettings: self.options.displayUserSettings
@@ -149,6 +150,9 @@
 
 			self.open_button.on( 'click', function( e ) {
 				e.preventDefault();
+
+				var selection = self.workflow.state( 'insert' ).get( 'selection' );
+				selection.reset( self.attachment ? [ self.attachment ] : [] );
 
 				self.open();
 			});

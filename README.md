@@ -9,6 +9,7 @@ This jQuery plugin for WordPress can be used to transform an input field into a 
 * transforms a simple input field in the WordPress admin into a media picker with buttons to open the WordPress media modal
 * handles the custom media modal behavior as well as how the value is stored in the input field (you're free to choose between ID and URL)
 * renders a preview of the attachment if it is an image, video or audio file
+* is based on jQuery UI Widget for a standardized API
 * uses WordPress Core technology wherever possible
 * fully compatible with WordPress Core media modal, so it can be used on post editing screens too
 * customizable with numerous settings which can be defined in the function call or as data attributes
@@ -29,8 +30,8 @@ To include the script and stylesheet, enqueue the script and stylesheet like so:
 ```php
 <?php
 wp_enqueue_media();
-wp_enqueue_script( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.js', array( 'jQuery', 'media-editor' ), '0.2.0', true );
-wp_enqueue_style( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.css', array(), '0.2.0' );
+wp_enqueue_script( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.js', array( 'jQuery', 'jquery-ui-widget', 'media-editor' ), '0.5.0', true );
+wp_enqueue_style( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.css', array(), '0.5.0' );
 
 ```
 
@@ -70,7 +71,7 @@ add_action( 'wp_ajax_get-attachment-by-url', 'mytheme_ajax_get_attachment_by_url
 
 ## Plugin Settings
 
-The plugin supports numerous settings so that you can tweak how your fields work. There are two ways to apply settings to a field: Either specify the settings (as an object) when initializing the plugin in Javascript, or put the settings into a `data-settings` attribute on the field (in JSON format).
+The plugin supports numerous settings so that you can tweak how your fields work. There are two ways to apply settings to a field: Either specify the settings (as an object) when initializing the plugin in Javascript, or apply them as data attributes on the field.
 
 Here you find a list of all available settings:
 
@@ -114,6 +115,16 @@ Here you find a list of all available settings:
 * Accepts a boolean
 * Default: false
 
+`change`:
+* An optional callback function to run when the attachment has changed
+* Accepts a function
+* Default: false
+
+`clear`:
+* An optional callback function to run when the attachment selection has been cleared
+* Accepts a function
+* Default: false
+
 `label_add`:
 * Sets the text for the add button on the field
 * Accepts a string
@@ -138,6 +149,24 @@ Here you find a list of all available settings:
 * Sets the button text for the media modal
 * Accepts a string
 * Default: 'Add Media'
+
+## Plugin Methods
+
+There are a number of methods that you can call by using a construct like `jQuery( '{{SELECTOR}}' ).wpMediaPicker( '{{NAME_OF_FUNCTION}}' )`.
+
+`open`:
+* Opens the media modal
+
+`close`:
+* Closes the media modal (without making a selection)
+
+`attachment`:
+* Dynamic getter/setter method for the attachment object (this is _not_ the field value itself!)
+* Accepts an attachment object (only for the setter functionality)
+
+`value`:
+* Dynamic getter/setter method for the field value
+* Accepts an integer (for `store: 'id'`) or a string (for `store: 'url'`) (only for the setter functionality)
 
 ## Contribute
 
