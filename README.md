@@ -37,13 +37,68 @@ wp_enqueue_style( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.css'
 
 Make sure to use the proper hook to enqueue the assets, for example in the `admin_enqueue_scripts` hook. Furthermore the dependencies in the above code sample must explicitly be included, otherwise the plugin will not work.
 
+### Add the field to your HTML
+
+Make sure to specify an id for your media field element.
+
+```html
+<!-- Declare the media picker -->
+<div class="custom-media-field" id="my-media-field"></div>
+
+<!-- Optionally declare an element to output the media id. Other elements
+could be specified for other required media metadata -->
+<input type="text" name='custom-media-field-id' id='my-media-field-id'/>
+
+```
+
 ### Initialize the plugin on your fields
 
-To turn your raw and boring input fields into really exciting media picker fields, you simply need to run the main plugin function `wpMediaPicker()` on your jQuery elements. For example:
+To turn your raw and boring input fields into really exciting media picker fields, you simply need to run the main plugin function `wpMediaPicker` on your jQuery elements. For example:
 
 ```js
 jQuery( '.custom-media-field' ).wpMediaPicker();
 ```
+
+A more detailed example could include watching your media field for changing values and removal and also initializing the field with a value. Here we use a hardcoded initial value, however in a real implementation, the developer would use the WordPress method [wp_localize_script()](https://codex.wordpress.org/Function_Reference/wp_localize_script) to pass the id of the currently selected image to the media picker. Other settings details can be found below.
+
+```js
+//Change Handler
+function onMediaFieldChange()
+{
+  //Set the id
+  jQuery('#my-media-field-id').val(jQuery('.custom-media-field').wpMediaPicker('value'));
+}
+
+//Removal Handler
+function onMediaFieldRemove()
+{
+  // Remove the custom media field
+  jQuery('.custom-media-field').wpMediaPicker('value', '');
+}
+
+( function( $ ) {
+  $( document ).ready( function() {
+  /**
+  * Inits our media object.
+  */
+  jQuery( '.custom-media-field' ).wpMediaPicker(
+  	{
+        'label_add':'Open Media Image',
+        'label_button':'Select',
+        'change':onMediaFieldChange,
+        'remove':onMediaFieldRemove,
+        'query':{ type: 'image'},
+        'displayUserSettings':true,
+        'displaySettings':true
+  	});
+
+  // Initialize our object with the media object with id of 161.
+  jQuery('.custom-media-field').wpMediaPicker('value', 161);
+
+  } );
+} )( jQuery );
+```
+
 
 ### Implement additional AJAX function
 
