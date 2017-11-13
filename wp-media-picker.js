@@ -303,7 +303,7 @@
 			this.workflow.close();
 		},
 
-		attachment: function( attachment ) {
+		attachmentInfo: function( attachment ) {
 			if ( 'undefined' === typeof attachment ) {
 				return this.attachment;
 			}

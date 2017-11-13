@@ -215,7 +215,7 @@ There are a number of methods that you can call by using a construct like `jQuer
 `close`:
 * Closes the media modal (without making a selection)
 
-`attachment`:
+`attachmentInfo`:
 * Dynamic getter/setter method for the attachment object (this is _not_ the field value itself!)
 * Accepts an attachment object (only for the setter functionality)
 
