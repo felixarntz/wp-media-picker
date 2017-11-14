@@ -70,7 +70,7 @@ function onMediaFieldChange()
 }
 
 //Removal Handler
-function onMediaFieldRemove()
+function onMediaFieldClear()
 {
   // Remove the custom media field
   jQuery('.custom-media-field').wpMediaPicker('value', '');
@@ -86,7 +86,7 @@ function onMediaFieldRemove()
         'label_add':'Open Media Image',
         'label_button':'Select',
         'change':onMediaFieldChange,
-        'remove':onMediaFieldRemove,
+        'clear':onMediaFieldClear,
         'query':{ type: 'image'},
         'displayUserSettings':true,
         'displaySettings':true
