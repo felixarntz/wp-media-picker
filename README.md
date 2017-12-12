@@ -30,8 +30,8 @@ To include the script and stylesheet, enqueue the script and stylesheet like so:
 ```php
 <?php
 wp_enqueue_media();
-wp_enqueue_script( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.js', array( 'jQuery', 'jquery-ui-widget', 'media-editor' ), '0.5.1', true );
-wp_enqueue_style( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.css', array(), '0.5.1' );
+wp_enqueue_script( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.js', array( 'jQuery', 'jquery-ui-widget', 'media-editor' ), '0.6.0', true );
+wp_enqueue_style( 'wp-media-picker', 'PATHTOMEDIAPICKER/wp-media-picker.min.css', array(), '0.6.0' );
 
 ```
 

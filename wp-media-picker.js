@@ -1,5 +1,5 @@
 /*
- * WP Media Picker -  version 0.2.0
+ * WP Media Picker -  version 0.6.0
  *
  * Felix Arntz <felix-arntz@leaves-and-love.net>
  */
@@ -236,44 +236,43 @@
 		_updateContent: function() {
 			var self = this;
 			var val = self.element.val();
+			var requestData;
 
 			if ( val ) {
 				// if an attachment is set, make an AJAX call to get the attachment data and generate the preview output
 				if ( 'url' === self.options.store ) {
-					wp.media.ajax({
-						type: 'POST',
-						data: {
-							action: 'get-attachment-by-url',
-							url: val
-						},
-						success: function( attachment ) {
-							self._createContent( attachment );
-						},
-						error: function() {
-							self.element.val( null );
-							self._resetContent();
-						}
-					});
+					requestData = {
+						action: 'get-attachment-by-url',
+						url: val
+					};
 				} else {
-					wp.media.ajax({
-						type: 'POST',
-						data: {
-							action: 'get-attachment',
-							id: parseInt( val, 10 )
-						},
-						success: function( attachment ) {
-							self._createContent( attachment );
-						},
-						error: function() {
-							self.element.val( null );
-							self._resetContent();
-						}
-					});
+					requestData = {
+						action: 'get-attachment',
+						id: parseInt( val, 10 )
+					};
 				}
+
+				wp.media.ajax({
+					type: 'POST',
+					data: requestData,
+					success: function( attachment ) {
+						self._createContent( attachment );
+
+						$( document ).trigger( 'wpMediaPicker.updateField', [ attachment, this ] );
+					},
+					error: function() {
+						self.element.val( null );
+						self._resetContent();
+
+						$( document ).trigger( 'wpMediaPicker.updateField', [ undefined, this ] );
+					}
+				});
 			} else {
 				// otherwise just generate the markup
 				self.element.val( null );
 				self._resetContent();
+
+				$( document ).trigger( 'wpMediaPicker.updateField', [ undefined, this ] );
 			}
 		},
 
@@ -291,6 +290,8 @@
 			if ( 'function' === typeof self.options.change ) {
 				self.options.change.call( self );
 			}
+
+			$( document ).trigger( 'wpMediaPicker.updateField', [ attachment, this ] );
 
 			return content;
 		},
@@ -319,6 +320,8 @@
 				}
 				this._createContent( attachment );
 			}
+
+			$( document ).trigger( 'wpMediaPicker.updateField', [ attachment, this ] );
 		},
 
 		value: function( val ) {
