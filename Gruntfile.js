@@ -3,7 +3,7 @@ module.exports = function(grunt) {
 	grunt.initConfig({
 		pkg: grunt.file.readJSON( 'package.json' ),
 		banner: '/*!\n' +
-				' * WP Media Picker -  version <%= pkg.version %>\n' +
+				' * WP Media Picker - version <%= pkg.version %>\n' +
 				' * \n' +
 				' * <%= pkg.author.name %> <<%= pkg.author.email %>>\n' +
 				' */',

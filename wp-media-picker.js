@@ -1,12 +1,16 @@
 /*
- * WP Media Picker -  version 0.6.0
+ * WP Media Picker - version 0.7.0
  *
  * Felix Arntz <felix-arntz@leaves-and-love.net>
  */
 
-( function( $, wp ) {
+( function( $, wp, _ ) {
 
-	if ( typeof wp === 'undefined' || typeof wp.media === 'undefined' ) {
+	var Select;
+	var MediaPickerFrame;
+	var MediaPicker;
+
+	if ( 'undefined' === typeof wp || 'undefined' === typeof wp.media ) {
 		// if wp.media is not loaded, scaffold the jQuery plugin function and abort
 		$.fn.wpMediaPicker = function() {
 			return this;
@@ -16,80 +20,91 @@
 		return;
 	}
 
-	/**
-	 * Stores the original WordPress Core function for sending an attachment to the editor
-	 *
-	 * @type function
-	 */
-	var _orig_send_attachment = wp.media.editor.send.attachment;
+	Select = wp.media.view.MediaFrame.Select;
 
-	/**
-	 * Stores the original global send_to_editor function which might be defined by a plugin
-	 *
-	 * @type function|undefined
-	 */
-	var _orig_send_to_editor = window.send_to_editor;
+	MediaPickerFrame = Select.extend({
+		initialize: function() {
+			_.defaults( this.options, {
+				query: {},
+				multiple: false,
+				editable: true,
+				filterable: 'all',
+				searchable: true,
+				displaySettings: false,
+				displayUserSettings: false,
+				editing: false,
+				state: 'insert',
+				metadata: {}
+			});
 
-	/**
-	 * Overrides the default send_to_editor function.
-	 *
-	 * Since WPMediaPicker uses this function to send HTML content to the preview div, we need to adjust this.
-	 *
-	 * @param string html the output to send
-	 */
-	var sendToEditor = function( html ) {
-		var wpActiveEditor = window.wpActiveEditor;
+			Select.prototype.initialize.apply( this, arguments );
+		},
 
-		document.getElementById( wpActiveEditor ).innerHTML = html;
+		createStates: function() {
+			this.states.add([
+				new wp.media.controller.Library({
+					id: 'insert',
+					title: this.options.title,
+					selection: this.options.selection,
+					priority: 20,
+					toolbar: 'main-insert',
+					filterable: this.options.filterable,
+					searchable: this.options.searchable,
+					library: wp.media.query( this.options.query ),
+					multiple: this.options.multiple,
+					editable: this.options.editable,
+					displaySettings: this.options.displaySettings,
+					displayUserSettings: this.options.displayUserSettings
+				}),
 
-		// always reset it back to the original after being executed
-		window.send_to_editor = _orig_send_to_editor;
-	};
+				new wp.media.controller.EditImage({ model: this.options.editImage })
+			]);
+		},
 
-	/**
-	 * Overrides the WordPress Core function to send an attachment from the media modal to the input field.
-	 *
-	 * This function assigns the attachment ID or URL respectively to the input field.
-	 * Then it generates the preview content for the field and returns it.
-	 *
-	 * It is compatible with the original function: if the current modal is not a modal added by WPMediaPicker, the original function is executed instead.
-	 *
-	 * @param object props attachment properties
-	 * @param object attachment the attachment object to send to the field
-	 * @return string HTML content to send to the preview field
-	 */
-	wp.media.editor.send.attachment = function( props, attachment ) {
-		var wpActiveEditor;
-		if ( wp.media.editor.activeEditor ) {
-			wpActiveEditor = wp.media.editor.activeEditor;
-		} else {
-			wpActiveEditor = window.wpActiveEditor || '';
+		bindHandlers: function() {
+			Select.prototype.bindHandlers.apply( this, arguments );
+
+			this.on( 'toolbar:create:main-insert', this.createToolbar, this );
+
+			this.on( 'content:render:edit-image', this.renderEditImageContent, this );
+			this.on( 'toolbar:render:main-insert', this.renderMainInsertToolbar, this );
+		},
+
+		renderEditImageContent: function() {
+			var view = new wp.media.view.EditImage({
+				controller: this,
+				model: this.state().get( 'image' )
+			}).render();
+
+			this.content.set( view );
+
+			view.loadEditor();
+		},
+
+		renderMainInsertToolbar: function( view ) {
+			var controller = this;
+
+			view.set( 'insert', {
+				style: 'primary',
+				priority: 80,
+				text: controller.options.buttonText,
+				requires: { selection: true },
+				click: function() {
+					controller.close();
+					controller.state().trigger( 'insert', controller.state().get( 'selection' ) ).reset();
+				}
+			});
 		}
-		if ( 0 === wpActiveEditor.search( 'wp-mediapicker-content-' ) ) {
-			var input_id = wpActiveEditor.substring( 'wp-mediapicker-content-'.length );
+	});
 
-			window.send_to_editor = sendToEditor;
-
-			return $( '#' + input_id ).wpMediaPicker( 'sendAttachment', attachment );
-		} else {
-			return _orig_send_attachment.apply( this, [ props, attachment ] );
-		}
-	};
-
-	var _wrap = '<div class="wp-mediapicker-container" />';
-	var _open_button = '<a class="wp-mediapicker-open-button button" />';
-	var _remove_button = '<a class="wp-mediapicker-remove-button" />';
-	var _content_wrap = '<div class="wp-mediapicker-content-wrap" />';
-	var _content = '<div class="wp-mediapicker-content" />';
-
-	var MediaPicker = {
+	MediaPicker = {
 		options: {
 			store: 'id',
 			query: {},
+			multiple: false,
 			filterable: 'all',
 			searchable: true,
 			editable:   false,
-			allowLocalEdits: false,
 			displaySettings: false,
 			displayUserSettings: false,
 			change: false,
@@ -108,36 +123,27 @@
 
 			self.content_id = 'wp-mediapicker-content-' + self.element.attr( 'id' );
 
-			self.element.hide().wrap( _wrap );
-			self.wrap = self.element.parent();
-			self.open_button = $( _open_button ).insertAfter( self.element );
-			self.remove_button = $( _remove_button ).insertAfter( self.open_button ).text( self.options.label_remove );
-			self.content_wrap = $( _content_wrap ).insertAfter( self.remove_button );
-			self.content = $( _content ).appendTo( self.content_wrap ).attr( 'id', self.content_id );
+			self.element.hide().wrap( '<div class="wp-mediapicker-container" />' );
 
-			self.workflow = wp.media.editor.add( self.content_id, {
+			self.wrap          = self.element.parent();
+			self.open_button   = $( '<a class="wp-mediapicker-open-button button" />' ).insertAfter( self.element );
+			self.remove_button = $( '<a class="wp-mediapicker-remove-button" />' ).insertAfter( self.open_button ).text( self.options.label_remove );
+			self.content_wrap  = $( '<div class="wp-mediapicker-content-wrap" />' ).insertAfter( self.remove_button );
+			self.content       = $( '<div class="wp-mediapicker-content" />' ).appendTo( self.content_wrap ).attr( 'id', self.content_id );
+
+			self.frame = new MediaPickerFrame({
+				title: self.options.label_modal,
+				buttonText: self.options.label_button,
 				frame: 'select',
 				state: 'insert',
-				states: [
-					new wp.media.controller.Library({
-						id: 'insert',
-						title: self.options.label_modal,
-						priority: 20,
-						toolbar: 'select',
-						filterable: self.options.filterable,
-						library: wp.media.query( self.options.query ),
-						multiple: false,
-						syncSelection: true,
-						editable: self.options.editable,
-						allowLocalEdits: self.options.allowLocalEdits,
-						displaySettings: self.options.displaySettings,
-						displayUserSettings: self.options.displayUserSettings
-					})
-				],
-				button: {
-					event: 'insert',
-					text: self.options.label_button
-				}
+				selection: new wp.media.model.Selection( [], {
+					multiple: self.options.multiple
+				}),
+				query: self.options.query,
+				multiple: self.options.multiple,
+				filterable: self.options.filterable,
+				searchable: self.options.searchable,
+				editable: self.options.editable
 			});
 
 			self._updateContent();
@@ -148,18 +154,34 @@
 		_addListeners: function() {
 			var self = this;
 
-			self.open_button.on( 'click', function( e ) {
-				e.preventDefault();
+			self.frame.on( 'insert', function() {
+				var attachment = {};
 
-				var selection = self.workflow.state( 'insert' ).get( 'selection' );
+				_.extend( attachment, self.frame.state().get( 'selection' ).first().toJSON() );
+
+				if ( 'url' === self.options.store ) {
+					self.element.val( attachment.url );
+				} else {
+					self.element.val( attachment.id );
+				}
+
+				self._createContent( attachment );
+
+				if ( 'function' === typeof self.options.change ) {
+					self.options.change.call( self );
+				}
+
+				$( document ).trigger( 'wpMediaPicker.updateField', [ attachment, self ] );
+			});
+
+			self.open_button.on( 'click', function() {
+				var selection = self.frame.state( 'insert' ).get( 'selection' );
 				selection.reset( self.attachment ? [ self.attachment ] : [] );
 
 				self.open();
 			});
 
-			self.remove_button.on( 'click', function( e ) {
-				e.preventDefault();
-
+			self.remove_button.on( 'click', function() {
 				self.element.val( null );
 
 				self._resetContent();
@@ -170,7 +192,7 @@
 			});
 		},
 
-		_createContent: function( attachment, return_content ) {
+		_createContent: function( attachment ) {
 			var self = this;
 
 			self.attachment = attachment;
@@ -214,13 +236,7 @@
 				self.content.removeClass( 'size-auto' );
 			}
 
-			self.content.show();
-
-			if ( return_content ) {
-				return preview_content;
-			}
-
-			self.content.html( preview_content );
+			self.content.show().html( preview_content );
 		},
 
 		_resetContent: function() {
@@ -276,32 +292,15 @@
 			}
 		},
 
-		sendAttachment: function( attachment ) {
-			var self = this;
-
-			if ( 'url' === self.options.store ) {
-				self.element.val( attachment.url );
-			} else {
-				self.element.val( attachment.id );
-			}
-
-			var content = self._createContent( attachment, true );
-
-			if ( 'function' === typeof self.options.change ) {
-				self.options.change.call( self );
-			}
-
-			$( document ).trigger( 'wpMediaPicker.updateField', [ attachment, this ] );
-
-			return content;
-		},
-
 		open: function() {
-			wp.media.editor.open( this.content_id );
+			wp.media.frame = this.frame;
+
+			this.frame.open();
+			this.frame.$el.find( '.media-frame-menu .media-menu-item.active' ).focus();
 		},
 
 		close: function() {
-			this.workflow.close();
+			this.frame.close();
 		},
 
 		attachment: function( attachment ) {
@@ -338,8 +337,12 @@
 
 			this.element.val( val );
 			this._updateContent();
+		},
+
+		frame: function() {
+			return this.frame;
 		}
 	};
 
 	$.widget( 'wp.wpMediaPicker', MediaPicker );
-}( jQuery, wp ) );
+}( jQuery, wp, _ ) );

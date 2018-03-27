@@ -46,6 +46,7 @@ tmp/
 *.bak
 *.log
 *.lock
+package-lock.json
 *.[Cc]ache
 *.cpr
 *.orig
