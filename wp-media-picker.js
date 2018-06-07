@@ -20,6 +20,20 @@
 		return;
 	}
 
+	/**
+	 * Gets an attachment object via AJAX based on a given ID or URL.
+	 *
+	 * @since 0.7.0
+	 *
+	 * @private
+	 *
+	 * @param {number|string} val        Attachment ID or URL.
+	 * @param {string}        valType    Whether 'val' was provided as 'id' or 'url'.
+	 * @param {function}      onFound    Callback to pass the found attachment to.
+	 * @param {function}      onNotFound Callback to run if no attachment was found.
+	 *
+	 * @return {void}
+	 */
 	function getAttachment( val, valType, onFound, onNotFound ) {
 		var requestData;
 
@@ -50,7 +64,23 @@
 
 	Select = wp.media.view.MediaFrame.Select;
 
+	/**
+	 * Custom media picker frame for selecting uploaded media.
+	 *
+	 * @since 0.7.0
+	 *
+	 * @class MediaPickerFrame
+	 * @constructor
+	 */
 	MediaPickerFrame = Select.extend({
+
+		/**
+		 * Initializes the media frame.
+		 *
+		 * @since 0.7.0
+		 *
+		 * @returns {void}
+		 */
 		initialize: function() {
 			_.defaults( this.options, {
 				query: {},
@@ -68,6 +98,13 @@
 			Select.prototype.initialize.apply( this, arguments );
 		},
 
+		/**
+		 * Creates the default states.
+		 *
+		 * @since 0.7.0
+		 *
+		 * @returns {void}
+		 */
 		createStates: function() {
 			this.states.add([
 				new wp.media.controller.Library({
@@ -89,6 +126,13 @@
 			]);
 		},
 
+		/**
+		 * Binds the necessary subview handlers.
+		 *
+		 * @since 0.7.0
+		 *
+		 * @returns {void}
+		 */
 		bindHandlers: function() {
 			Select.prototype.bindHandlers.apply( this, arguments );
 
@@ -98,6 +142,13 @@
 			this.on( 'toolbar:render:main-insert', this.renderMainInsertToolbar, this );
 		},
 
+		/**
+		 * Renders the edit image content.
+		 *
+		 * @since 0.7.0
+		 *
+		 * @returns {void}
+		 */
 		renderEditImageContent: function() {
 			var view = new wp.media.view.EditImage({
 				controller: this,
@@ -109,6 +160,15 @@
 			view.loadEditor();
 		},
 
+		/**
+		 * Renders the main insert toolbar.
+		 *
+		 * @since 0.7.0
+		 *
+		 * @param {wp.Backbone.View} view Toolbar view.
+		 *
+		 * @returns {void}
+		 */
 		renderMainInsertToolbar: function( view ) {
 			var controller = this;
 
@@ -125,6 +185,14 @@
 		}
 	});
 
+	/**
+	 * Media picker jQuery widget.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @class $.widget.wp.wpMediaPicker
+	 * @constructor
+	 */
 	MediaPicker = {
 		options: {
 			store: 'id',
@@ -144,6 +212,13 @@
 			label_button: wp.media.view.l10n.addMedia
 		},
 
+		/**
+		 * Creates the media picker markup and initializes the media frame for the element.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @returns {void}
+		 */
 		_create: function() {
 			var self = this;
 
@@ -185,6 +260,13 @@
 			self._addListeners();
 		},
 
+		/**
+		 * Adds event listeners for the media picker buttons and the media frame inserter.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @returns {void}
+		 */
 		_addListeners: function() {
 			var self = this;
 
@@ -212,6 +294,15 @@
 			});
 		},
 
+		/**
+		 * Creates the preview content markup for a given attachment.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param {object} attachment WordPress attachment data.
+		 *
+		 * @returns {void}
+		 */
 		_createContent: function( attachment ) {
 			var self = this;
 
@@ -262,6 +353,13 @@
 			self.content.show().html( preview_content );
 		},
 
+		/**
+		 * Resets the preview content markup.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @returns {void}
+		 */
 		_resetContent: function() {
 			var self = this;
 
@@ -272,10 +370,29 @@
 			self.content.hide().empty().removeClass( 'size-auto' );
 		},
 
+		/**
+		 * Gets the currently selected attachment.
+		 *
+		 * @since 0.7.0
+		 *
+		 * @returns {object} WordPress attachment data, or null.
+		 */
 		_getAttachment: function() {
 			return this.attachment;
 		},
 
+		/**
+		 * Sets the currently selected attachment.
+		 *
+		 * If the attachment is different from the current attachment,
+		 * change events will be triggered.
+		 *
+		 * @since 0.7.0
+		 *
+		 * @param {object} attachment WordPress attachment data.
+		 *
+		 * @returns {void}
+		 */
 		_setAttachment: function( attachment ) {
 			if ( ! attachment ) {
 				this._resetContent();
@@ -315,6 +432,15 @@
 			$( document ).trigger( 'wpMediaPicker.updateField', [ attachment, this ] );
 		},
 
+		/**
+		 * Gets the current value of the element.
+		 *
+		 * This is not the attachment, but the ID or URL depending on the store option.
+		 *
+		 * @since 0.7.0
+		 *
+		 * @returns {number|string} Attachment ID, URL, or empty string if no attachment selected.
+		 */
 		_getValue: function() {
 			if ( ! this.attachment ) {
 				return '';
@@ -327,6 +453,17 @@
 			return this.attachment.id;
 		},
 
+		/**
+		 * Sets the current value of the element.
+		 *
+		 * This is not the attachment, but the ID or URL depending on the store option.
+		 *
+		 * @since 0.7.0
+		 *
+		 * @param {number|string} val Attachment ID, URL, or empty string if no attachment selected.
+		 *
+		 * @returns {void}
+		 */
 		_setValue: function( val ) {
 			var self = this;
 
@@ -342,6 +479,13 @@
 			);
 		},
 
+		/**
+		 * Opens the media picker frame.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @returns {void}
+		 */
 		open: function() {
 			wp.media.frame = this.frame;
 
@@ -349,10 +493,26 @@
 			this.frame.$el.find( '.media-frame-menu .media-menu-item.active' ).focus();
 		},
 
+		/**
+		 * Closes the media picker frame.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @returns {void}
+		 */
 		close: function() {
 			this.frame.close();
 		},
 
+		/**
+		 * Gets or sets the currently selected attachment.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param {object|undefined} attachment WordPress attachment data, or undefined to get the attachment.
+		 *
+		 * @returns {void|object} WordPress attachment data if used as a getter.
+		 */
 		attachment: function( attachment ) {
 			if ( 'undefined' === typeof attachment ) {
 				return this._getAttachment();
@@ -361,6 +521,15 @@
 			this._setAttachment( attachment );
 		},
 
+		/**
+		 * Gets or sets the current value of the element.
+		 *
+		 * @since 0.1.0
+		 *
+		 * @param {number|string|undefined} val Attachment ID, URL, or undefined to get the value.
+		 *
+		 * @returns {void|number|string} Attachment ID or URL if used as a getter.
+		 */
 		value: function( val ) {
 			if ( 'undefined' === typeof val ) {
 				return this._getValue();
@@ -369,10 +538,18 @@
 			this._setValue( val );
 		},
 
+		/**
+		 * Gets the media frame instance used by the media picker.
+		 *
+		 * @since 0.7.0
+		 *
+		 * @returns {MediaPickerFrame} Media picker frame instance.
+		 */
 		frame: function() {
 			return this.frame;
 		}
 	};
 
 	$.widget( 'wp.wpMediaPicker', MediaPicker );
+
 }( jQuery, wp, _ ) );
