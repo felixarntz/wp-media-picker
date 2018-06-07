@@ -215,16 +215,7 @@
 			self.remove_button.show();
 
 			var preview_content = '';
-			if ( 'image' === attachment.type ) {
-				// for image attachments, show the image
-				var src = attachment.url;
-				if ( attachment.sizes && attachment.sizes.large ) {
-					src = attachment.sizes.large.url;
-				} else if ( attachment.sizes && attachment.sizes.full ) {
-					src = attachment.sizes.full.url;
-				}
-				preview_content += '<img src="' + src + '" alt="' + attachment.alt + '" />';
-			} else if ( 'video' === attachment.type ) {
+			if ( 'video' === attachment.type ) {
 				// for video attachments, show the video player, optionally with the poster
 				var poster = '';
 				if ( attachment.image && attachment.image.src !== attachment.icon ) {
@@ -240,8 +231,20 @@
 				}
 				preview_content += '<audio class="wp-audio-shortcode" width="100%" preload="none" controls><source type="' + attachment.mime + '" src="' + attachment.url + '" /></audio>';
 			} else {
-				// if neither of the above formats, just show a mime type icon with the filename
-				preview_content += '<div class="mime-type-icon"><img src="' + attachment.icon + '" /><span>' + attachment.filename + '</span></div>';
+				var src = 'image' === attachment.type ? attachment.url : undefined;
+				if ( attachment.sizes ) {
+					if ( attachment.sizes.large ) {
+						src = attachment.sizes.large.url;
+					} else if ( attachment.sizes.full ) {
+						src = attachment.sizes.full.url;
+					}
+				}
+
+				if ( src ) {
+					preview_content += '<img src="' + src + '" alt="' + attachment.alt + '" />';
+				} else {
+					preview_content += '<div class="mime-type-icon"><img src="' + attachment.icon + '" /><span>' + attachment.filename + '</span></div>';
+				}
 			}
 
 			if ( 0 <= preview_content.search( '<img ' ) ) {
