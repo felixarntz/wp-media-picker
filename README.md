@@ -76,77 +76,77 @@ The plugin supports numerous settings so that you can tweak how your fields work
 Here you find a list of all available settings:
 
 `store`:
-* Determines how the attachment is stored in the input field
+* Determines how the attachment is stored in the input field.
 * Accepts 'id' or 'url'
 * Default: 'id'
 
 `query`:
-* Alters the attachments query in the media library (for example to only show images, use `{ post_mime_type: 'image' }`)
+* Alters the attachments query in the media library (for example to only show images, use `{ type: 'image' }`).
 * Accepts an object in JSON format
 * Default: empty object
 
+`multiple`:
+* Whether to allow multiple attachments to be selected at once (requires custom handling, see Hooks section below).
+* Accepts a boolean
+* Default: false
+
 `filterable`:
-* Whether the library is filterable, and if so what filters should be shown
+* Whether the library is filterable, and if so what filters should be shown.
 * Accepts 'all', 'uploaded' or 'unattached'
 * Default: 'all'
 
 `searchable`:
-* Whether the library is searchable
+* Whether the library is searchable.
 * Accepts a boolean
 * Default: true
 
 `editable`:
-* Whether the library content is editable
-* Accepts a boolean
-* Default: false
-
-`allowLocalEdits`:
-* Whether the library content can be edited locally (only used if `editable` is false)
+* Whether the library content is editable.
 * Accepts a boolean
 * Default: false
 
 `displaySettings`:
-* Whether to show the attachment display settings
+* Whether to show the attachment display settings.
 * Accepts a boolean
 * Default: false
 
 `displayUserSettings`:
-* Whether to update the user settings when editing attachment display settings
+* Whether to update the user settings when editing attachment display settings.
 * Accepts a boolean
 * Default: false
 
 `change`:
-* An optional callback function to run when the attachment has changed
+* An optional callback function to run when the attachment has changed.
 * Accepts a function
 * Default: false
 
 `clear`:
-* An optional callback function to run when the attachment selection has been cleared
+* An optional callback function to run when the attachment selection has been cleared.
 * Accepts a function
 * Default: false
 
 `label_add`:
-* Sets the text for the add button on the field
+* Sets the text for the add button on the field.
 * Accepts a string
 * Default: 'Add Media'
 
 `label_replace`:
-* Sets the text for the replace button on the field
+* Sets the text for the replace button on the field.
 * Accepts a string
 * Default: 'Replace'
 
 `label_remove`:
-* Sets the text for the remove button on the field
+* Sets the text for the remove button on the field.
 * Accepts a string
 * Default: 'Remove'
 
 `label_modal`:
-* Sets the title text for the media modal
+* Sets the title text for the media modal.
 * Accepts a string
 * Default: 'Add Media'
 
 `label_button`:
-* Sets the button text for the media modal
+* Sets the button text for the media modal.
 * Accepts a string
 * Default: 'Add Media'
 
@@ -154,19 +154,34 @@ Here you find a list of all available settings:
 
 There are a number of methods that you can call by using a construct like `jQuery( '{{SELECTOR}}' ).wpMediaPicker( '{{NAME_OF_FUNCTION}}' )`.
 
-`open`:
-* Opens the media modal
+`open()`:
+* Opens the media modal.
 
-`close`:
-* Closes the media modal (without making a selection)
+`close()`:
+* Closes the media modal (without making a selection).
 
-`attachment`:
-* Dynamic getter/setter method for the attachment object (this is _not_ the field value itself!)
+`attachment()`:
+* Dynamic getter/setter method for the attachment object.
 * Accepts an attachment object (only for the setter functionality)
 
-`value`:
-* Dynamic getter/setter method for the field value
+`value()`:
+* Dynamic getter/setter method for the field value.
 * Accepts an integer (for `store: 'id'`) or a string (for `store: 'url'`) (only for the setter functionality)
+
+`frame()`:
+* Getter method for the media frame instance.
+
+## Hooks
+
+Besides a regular `change` event fired on the input when its value has changed, there are two custom events that are fired on the document:
+
+`wpMediaPicker.updateField`:
+* Fired when the attachment is updated.
+* Passes two values, the attachment object (or null if the attachment was removed), and the media picker instance
+
+`wpMediaPicker.insert`:
+* Fired when attachments have been selected and are inserted. This allows for custom handling of multiple attachments being selected at the same time. Out-of-the-box the media picker will still always use the first image available for the current field.
+* Passes two values, the array of attachment objects seleted, and the media picker instance
 
 ## Contribute
 
