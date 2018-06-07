@@ -149,6 +149,12 @@
 
 			$.extend( self.options, self.element.data() );
 
+			// Use the 'type' query attribute in favor of 'post_mime_type'.
+			if ( self.options.query && self.options.query.post_mime_type ) {
+				self.options.query.type = self.options.query.post_mime_type;
+				delete self.options.query.post_mime_type;
+			}
+
 			self.content_id = 'wp-mediapicker-content-' + self.element.attr( 'id' );
 
 			self.element.hide().wrap( '<div class="wp-mediapicker-container" />' );
