@@ -20,6 +20,34 @@
 		return;
 	}
 
+	function getAttachment( val, valType, onFound, onNotFound ) {
+		var requestData;
+
+		if ( ! val ) {
+			onNotFound();
+			return;
+		}
+
+		if ( 'url' === valType ) {
+			requestData = {
+				action: 'get-attachment-by-url',
+				url: val
+			};
+		} else {
+			requestData = {
+				action: 'get-attachment',
+				id: parseInt( val, 10 )
+			};
+		}
+
+		wp.media.ajax({
+			type: 'POST',
+			data: requestData,
+			success: onFound,
+			error: onNotFound
+		});
+	}
+
 	Select = wp.media.view.MediaFrame.Select;
 
 	MediaPickerFrame = Select.extend({
@@ -146,7 +174,7 @@
 				editable: self.options.editable
 			});
 
-			self._updateContent();
+			self._setValue( self.element.val() );
 
 			self._addListeners();
 		},
@@ -155,23 +183,15 @@
 			var self = this;
 
 			self.frame.on( 'insert', function() {
+				var selection  = self.frame.state().get( 'selection' );
 				var attachment = {};
 
-				_.extend( attachment, self.frame.state().get( 'selection' ).first().toJSON() );
+				_.extend( attachment, selection.first().toJSON() );
 
-				if ( 'url' === self.options.store ) {
-					self.element.val( attachment.url );
-				} else {
-					self.element.val( attachment.id );
-				}
+				console.log( self );
+				self._setAttachment( attachment );
 
-				self._createContent( attachment );
-
-				if ( 'function' === typeof self.options.change ) {
-					self.options.change.call( self );
-				}
-
-				$( document ).trigger( 'wpMediaPicker.updateField', [ attachment, self ] );
+				$( document ).trigger( 'wpMediaPicker.insertSelection', [ selection, self ] );
 			});
 
 			self.open_button.on( 'click', function() {
@@ -182,13 +202,7 @@
 			});
 
 			self.remove_button.on( 'click', function() {
-				self.element.val( null );
-
-				self._resetContent();
-
-				if ( 'function' === typeof self.options.clear ) {
-					self.options.clear.call( self );
-				}
+				self._setAttachment( null );
 			});
 		},
 
@@ -249,47 +263,74 @@
 			self.content.hide().empty().removeClass( 'size-auto' );
 		},
 
-		_updateContent: function() {
-			var self = this;
-			var val = self.element.val();
-			var requestData;
+		_getAttachment: function() {
+			return this.attachment;
+		},
 
-			if ( val ) {
-				// if an attachment is set, make an AJAX call to get the attachment data and generate the preview output
-				if ( 'url' === self.options.store ) {
-					requestData = {
-						action: 'get-attachment-by-url',
-						url: val
-					};
-				} else {
-					requestData = {
-						action: 'get-attachment',
-						id: parseInt( val, 10 )
-					};
+		_setAttachment: function( attachment ) {
+			if ( ! attachment ) {
+				this._resetContent();
+
+				if ( ! this.attachment ) {
+					return;
 				}
 
-				wp.media.ajax({
-					type: 'POST',
-					data: requestData,
-					success: function( attachment ) {
-						self._createContent( attachment );
+				this.element.val( null );
+				this.element.trigger( 'change' );
 
-						$( document ).trigger( 'wpMediaPicker.updateField', [ attachment, this ] );
-					},
-					error: function() {
-						self.element.val( null );
-						self._resetContent();
+				if ( 'function' === typeof self.options.clear ) {
+					self.options.clear.call( self );
+				}
 
-						$( document ).trigger( 'wpMediaPicker.updateField', [ undefined, this ] );
-					}
-				});
-			} else {
-				// otherwise just generate the markup
-				self.element.val( null );
-				self._resetContent();
-
-				$( document ).trigger( 'wpMediaPicker.updateField', [ undefined, this ] );
+				$( document ).trigger( 'wpMediaPicker.updateField', [ null, this ] );
+				return;
 			}
+
+			this._createContent( attachment );
+
+			if ( this.attachment && this.attachment.id === attachment.id ) {
+				return;
+			}
+
+			if ( 'url' === this.options.store ) {
+				this.element.val( attachment.url );
+			} else {
+				this.element.val( attachment.id );
+			}
+			this.element.trigger( 'change' );
+
+			if ( 'function' === typeof self.options.change ) {
+				self.options.change.call( self );
+			}
+
+			$( document ).trigger( 'wpMediaPicker.updateField', [ attachment, this ] );
+		},
+
+		_getValue: function() {
+			if ( ! this.attachment ) {
+				return '';
+			}
+
+			if ( 'url' === this.options.store ) {
+				return this.attachment.url;
+			}
+
+			return this.attachment.id;
+		},
+
+		_setValue: function( val ) {
+			var self = this;
+
+			getAttachment(
+				val,
+				self.options.store,
+				function( attachment ) {
+					self._setAttachment( attachment );
+				},
+				function() {
+					self._setAttachment( null );
+				}
+			);
 		},
 
 		open: function() {
@@ -305,38 +346,18 @@
 
 		attachment: function( attachment ) {
 			if ( 'undefined' === typeof attachment ) {
-				return this.attachment;
+				return this._getAttachment();
 			}
 
-			if ( ! attachment ) {
-				this.element.val( null );
-				this._resetContent();
-			} else {
-				if ( 'url' === this.options.store ) {
-					this.element.val( attachment.url );
-				} else {
-					this.element.val( attachment.id );
-				}
-				this._createContent( attachment );
-			}
-
-			$( document ).trigger( 'wpMediaPicker.updateField', [ attachment, this ] );
+			this._setAttachment( attachment );
 		},
 
 		value: function( val ) {
 			if ( 'undefined' === typeof val ) {
-				if ( ! this.attachment ) {
-					return '';
-				}
-				if ( 'url' === this.options.store ) {
-					return this.attachment.url;
-				} else {
-					return this.attachment.id;
-				}
+				return this._getValue();
 			}
 
-			this.element.val( val );
-			this._updateContent();
+			this._setValue( val );
 		},
 
 		frame: function() {
