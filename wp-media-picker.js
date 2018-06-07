@@ -154,8 +154,8 @@
 			self.element.hide().wrap( '<div class="wp-mediapicker-container" />' );
 
 			self.wrap          = self.element.parent();
-			self.open_button   = $( '<a class="wp-mediapicker-open-button button" />' ).insertAfter( self.element );
-			self.remove_button = $( '<a class="wp-mediapicker-remove-button" />' ).insertAfter( self.open_button ).text( self.options.label_remove );
+			self.open_button   = $( '<button type="button" class="wp-mediapicker-open-button button" />' ).insertAfter( self.element );
+			self.remove_button = $( '<button type="button" class="wp-mediapicker-remove-button button-link button-link-delete" />' ).hide().insertAfter( self.open_button ).text( self.options.label_remove );
 			self.content_wrap  = $( '<div class="wp-mediapicker-content-wrap" />' ).insertAfter( self.remove_button );
 			self.content       = $( '<div class="wp-mediapicker-content" />' ).appendTo( self.content_wrap ).attr( 'id', self.content_id );
 
