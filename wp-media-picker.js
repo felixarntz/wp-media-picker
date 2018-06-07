@@ -183,15 +183,15 @@
 			var self = this;
 
 			self.frame.on( 'insert', function() {
-				var selection  = self.frame.state().get( 'selection' );
-				var attachment = {};
+				var selection   = self.frame.state().get( 'selection' );
+				var attachments = selection.models.map( function( model ) {
+					return _.extend( {}, model.toJSON() );
+				});
+				var attachment  = _.extend( {}, selection.first().toJSON() );
 
-				_.extend( attachment, selection.first().toJSON() );
-
-				console.log( self );
 				self._setAttachment( attachment );
 
-				$( document ).trigger( 'wpMediaPicker.insertSelection', [ selection, self ] );
+				$( document ).trigger( 'wpMediaPicker.insert', [ attachments, self ] );
 			});
 
 			self.open_button.on( 'click', function() {
