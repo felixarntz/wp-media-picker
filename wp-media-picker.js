@@ -404,8 +404,8 @@
 				this.element.val( null );
 				this.element.trigger( 'change' );
 
-				if ( 'function' === typeof self.options.clear ) {
-					self.options.clear.call( self );
+				if ( 'function' === typeof this.options.clear ) {
+					this.options.clear.call( this );
 				}
 
 				$( document ).trigger( 'wpMediaPicker.updateField', [ null, this ] );
@@ -425,8 +425,8 @@
 			}
 			this.element.trigger( 'change' );
 
-			if ( 'function' === typeof self.options.change ) {
-				self.options.change.call( self );
+			if ( 'function' === typeof this.options.change ) {
+				this.options.change.call( this );
 			}
 
 			$( document ).trigger( 'wpMediaPicker.updateField', [ attachment, this ] );
