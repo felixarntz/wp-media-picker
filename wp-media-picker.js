@@ -394,10 +394,12 @@
 		 * @returns {void}
 		 */
 		_setAttachment: function( attachment ) {
+			var noChange = ( attachment && this.attachment && attachment.id === this.attachment.id ) || ( ! attachment && ! this.attachment );
+
 			if ( ! attachment ) {
 				this._resetContent();
 
-				if ( ! this.attachment ) {
+				if ( noChange ) {
 					return;
 				}
 
@@ -414,7 +416,7 @@
 
 			this._createContent( attachment );
 
-			if ( this.attachment && this.attachment.id === attachment.id ) {
+			if ( noChange ) {
 				return;
 			}
 
