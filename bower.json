@@ -1,6 +1,6 @@
 {
   "name": "wp-media-picker",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "This jQuery plugin for WordPress can be used to transform an input field into a flexible and compatible media field with attachment selection and preview.",
   "main": [
     "wp-media-picker.min.js",

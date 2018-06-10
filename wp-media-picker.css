@@ -1,5 +1,5 @@
 /*
- * WP Media Picker - version 0.7.0
+ * WP Media Picker - version 0.7.1
  *
  * Felix Arntz <felix-arntz@leaves-and-love.net>
  */
