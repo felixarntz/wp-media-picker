@@ -230,17 +230,17 @@
 				delete self.options.query.post_mime_type;
 			}
 
-			self.content_id = 'wp-mediapicker-content-' + self.element.attr( 'id' );
+			self._content_id = 'wp-mediapicker-content-' + self.element.attr( 'id' );
 
 			self.element.hide().wrap( '<div class="wp-mediapicker-container" />' );
 
-			self.wrap          = self.element.parent();
-			self.open_button   = $( '<button type="button" class="wp-mediapicker-open-button button" />' ).insertAfter( self.element );
-			self.remove_button = $( '<button type="button" class="wp-mediapicker-remove-button button-link button-link-delete" />' ).hide().insertAfter( self.open_button ).text( self.options.label_remove );
-			self.content_wrap  = $( '<div class="wp-mediapicker-content-wrap" />' ).insertAfter( self.remove_button );
-			self.content       = $( '<div class="wp-mediapicker-content" />' ).appendTo( self.content_wrap ).attr( 'id', self.content_id );
+			self._wrap          = self.element.parent();
+			self._open_button   = $( '<button type="button" class="wp-mediapicker-open-button button" />' ).insertAfter( self.element );
+			self._remove_button = $( '<button type="button" class="wp-mediapicker-remove-button button-link button-link-delete" />' ).hide().insertAfter( self._open_button ).text( self.options.label_remove );
+			self._content_wrap  = $( '<div class="wp-mediapicker-content-wrap" />' ).insertAfter( self._remove_button );
+			self._content       = $( '<div class="wp-mediapicker-content" />' ).appendTo( self._content_wrap ).attr( 'id', self._content_id );
 
-			self.frame = new MediaPickerFrame({
+			self._frame = new MediaPickerFrame({
 				title: self.options.label_modal,
 				buttonText: self.options.label_button,
 				frame: 'select',
@@ -270,8 +270,8 @@
 		_addListeners: function() {
 			var self = this;
 
-			self.frame.on( 'insert', function() {
-				var selection   = self.frame.state().get( 'selection' );
+			self._frame.on( 'insert', function() {
+				var selection   = self._frame.state().get( 'selection' );
 				var attachments = selection.models.map( function( model ) {
 					return _.extend( {}, model.toJSON() );
 				});
@@ -282,14 +282,14 @@
 				$( document ).trigger( 'wpMediaPicker.insert', [ attachments, self ] );
 			});
 
-			self.open_button.on( 'click', function() {
-				var selection = self.frame.state( 'insert' ).get( 'selection' );
-				selection.reset( self.attachment ? [ self.attachment ] : [] );
+			self._open_button.on( 'click', function() {
+				var selection = self._frame.state( 'insert' ).get( 'selection' );
+				selection.reset( self._attachment ? [ self._attachment ] : [] );
 
 				self.open();
 			});
 
-			self.remove_button.on( 'click', function() {
+			self._remove_button.on( 'click', function() {
 				self._setAttachment( null );
 			});
 		},
@@ -306,10 +306,10 @@
 		_createContent: function( attachment ) {
 			var self = this;
 
-			self.attachment = attachment;
+			self._attachment = attachment;
 
-			self.open_button.text( self.options.label_replace );
-			self.remove_button.show();
+			self._open_button.text( self.options.label_replace );
+			self._remove_button.show();
 
 			var preview_content = '';
 			if ( 'video' === attachment.type ) {
@@ -345,12 +345,12 @@
 			}
 
 			if ( 0 <= preview_content.search( '<img ' ) ) {
-				self.content.addClass( 'size-auto' );
+				self._content.addClass( 'size-auto' );
 			} else {
-				self.content.removeClass( 'size-auto' );
+				self._content.removeClass( 'size-auto' );
 			}
 
-			self.content.show().html( preview_content );
+			self._content.show().html( preview_content );
 		},
 
 		/**
@@ -363,11 +363,11 @@
 		_resetContent: function() {
 			var self = this;
 
-			self.attachment = null;
+			self._attachment = null;
 
-			self.open_button.text( self.options.label_add );
-			self.remove_button.hide();
-			self.content.hide().empty().removeClass( 'size-auto' );
+			self._open_button.text( self.options.label_add );
+			self._remove_button.hide();
+			self._content.hide().empty().removeClass( 'size-auto' );
 		},
 
 		/**
@@ -378,7 +378,7 @@
 		 * @returns {object} WordPress attachment data, or null.
 		 */
 		_getAttachment: function() {
-			return this.attachment;
+			return this._attachment;
 		},
 
 		/**
@@ -394,7 +394,7 @@
 		 * @returns {void}
 		 */
 		_setAttachment: function( attachment ) {
-			var noChange = ( attachment && this.attachment && attachment.id === this.attachment.id ) || ( ! attachment && ! this.attachment );
+			var noChange = ( attachment && this._attachment && attachment.id === this._attachment.id ) || ( ! attachment && ! this._attachment );
 
 			if ( ! attachment ) {
 				this._resetContent();
@@ -444,15 +444,15 @@
 		 * @returns {number|string} Attachment ID, URL, or empty string if no attachment selected.
 		 */
 		_getValue: function() {
-			if ( ! this.attachment ) {
+			if ( ! this._attachment ) {
 				return '';
 			}
 
 			if ( 'url' === this.options.store ) {
-				return this.attachment.url;
+				return this._attachment.url;
 			}
 
-			return this.attachment.id;
+			return this._attachment.id;
 		},
 
 		/**
@@ -489,10 +489,10 @@
 		 * @returns {void}
 		 */
 		open: function() {
-			wp.media.frame = this.frame;
+			wp.media.frame = this._frame;
 
-			this.frame.open();
-			this.frame.$el.find( '.media-frame-menu .media-menu-item.active' ).focus();
+			this._frame.open();
+			this._frame.$el.find( '.media-frame-menu .media-menu-item.active' ).focus();
 		},
 
 		/**
@@ -503,7 +503,7 @@
 		 * @returns {void}
 		 */
 		close: function() {
-			this.frame.close();
+			this._frame.close();
 		},
 
 		/**
@@ -548,7 +548,7 @@
 		 * @returns {MediaPickerFrame} Media picker frame instance.
 		 */
 		frame: function() {
-			return this.frame;
+			return this._frame;
 		}
 	};
 
